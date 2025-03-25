@@ -14,13 +14,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var lastProcessedRTFData: Data?
     var lastProcessedHTMLData: Data?
     var isLaunchAtLoginEnabled = false
+    
+    let defaults: [String: Any] = [
+        "AutoConvertEnabled": true,
+        "AutoPlaintextEnabled": true,
+        "AutoSmartQuotesEnabled": true,
+        "LaunchAtLoginEnabled": false
+    ]
 
+    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Create the status item for the menubar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
             button.title = "Tiff2PNG" // You can also set an image here
         }
+        
+        // Register default settings
+        UserDefaults.standard.register(defaults: defaults)
+        
+        isConversionEnabled = UserDefaults.standard.bool(forKey: "AutoConvertEnabled")
+        isPlaintextEnabled = UserDefaults.standard.bool(forKey: "AutoPlaintextEnabled")
+        isSmartQuotesEnabled = UserDefaults.standard.bool(forKey: "AutoSmartQuotesEnabled")
+        isLaunchAtLoginEnabled = UserDefaults.standard.bool(forKey: "LaunchAtLoginEnabled")
         
         // Build the menu for the status item
         let menu = NSMenu()
@@ -69,21 +85,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func toggleConversion(_ sender: NSMenuItem) {
         isConversionEnabled.toggle()
         sender.state = isConversionEnabled ? .on : .off
+        UserDefaults.standard.set(isConversionEnabled, forKey: "AutoConvertEnabled")
+        UserDefaults.standard.synchronize()
     }
 
     @objc func togglePlaintext(_ sender: NSMenuItem) {
         isPlaintextEnabled.toggle()
         sender.state = isPlaintextEnabled ? .on : .off
+        UserDefaults.standard.set(isPlaintextEnabled, forKey: "AutoPlaintextEnabled")
+        UserDefaults.standard.synchronize()
     }
     
     @objc func toggleSmartQuotes(_ sender: NSMenuItem) {
         isSmartQuotesEnabled.toggle()
         sender.state = isSmartQuotesEnabled ? .on : .off
+        UserDefaults.standard.set(isSmartQuotesEnabled, forKey: "AutoSmartQuotesEnabled")
+        UserDefaults.standard.synchronize()
     }
     
     @objc func toggleLaunchAtLogin(_ sender: NSMenuItem) {
         isLaunchAtLoginEnabled.toggle()
         sender.state = isLaunchAtLoginEnabled ? .on : .off
+        UserDefaults.standard.set(isLaunchAtLoginEnabled, forKey: "LaunchAtLoginEnabled")
+        UserDefaults.standard.synchronize()
         if #available(macOS 13.0, *) {
             do {
                 if isLaunchAtLoginEnabled {
