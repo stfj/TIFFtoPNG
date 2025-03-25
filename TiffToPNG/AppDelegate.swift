@@ -38,6 +38,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        
+        // Close main app window
+        if let window = NSApplication.shared.windows.first {
+            window.close()
+        }
+        
         // Create the status item for the menubar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
