@@ -151,40 +151,55 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Update the lastChangeCount to prevent reprocessing
             lastChangeCount = pasteboard.changeCount
             
+            /*if let items = NSPasteboard.general.pasteboardItems, !items.isEmpty {
+                                for (index, item) in items.enumerated() {
+                                    var logMessage = "Item \(index):\n"
+                                    for type in item.types {
+                                        logMessage += "  Type: \(type.rawValue)"
+                                        // If the type is a string type, log its content.
+                                        if type == NSPasteboard.PasteboardType.string, let text = item.string(forType: type) {
+                                            logMessage += " -> Content: \(text)"
+                                        } else if let data = item.data(forType: type) {
+                                            logMessage += " -> Data length: \(data.count) bytes"
+                                        }
+                                        logMessage += "\n"
+                                    }
+                                    print(logMessage)
+                                }
+                            } else {
+                                print("No pasteboard items available.")
+                            }*/
+            
             // Check for TIFF data and if conversion is enabled
-            if isConversionEnabled,
-               let types = pasteboard.types,
-               types.contains(.tiff),
-               !types.contains(.png),
-               let tiffData = pasteboard.data(forType: .tiff) {
-                
-                let tiffSignature1 = Data([0x49, 0x49, 0x2A, 0x00])
-                let tiffSignature2 = Data([0x4D, 0x4D, 0x00, 0x2A])
-                print(tiffData.starts(with: tiffSignature1) || tiffData.starts(with: tiffSignature2))
-                guard tiffData.starts(with: tiffSignature1) || tiffData.starts(with: tiffSignature2) else {
-                    return
-                }
-                
-
-                if let image = NSImage(data: tiffData),
-                   let pngData = image.pngDataRepresentation() {
-                    
-                    // Replace the clipboard content with PNG data
-                    lastChangeCount += 1;
-                    pasteboard.clearContents()
-                    pasteboard.setData(pngData, forType: .png)
-                    
-                    // Schedule a system notification
-                    let content = UNMutableNotificationContent()
-                    content.title = "Clipboard Updated"
-                    content.body = "->PNG"
-
-                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-                    let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-                    
-                    // After processing TIFF, exit to avoid further processing
-                    return
+            if isConversionEnabled, let items = NSPasteboard.general.pasteboardItems {
+                for item in items {
+                    let typeNames = item.types.map { $0.rawValue }
+                    // Only proceed if the item's types explicitly include "public.tiff" and don't include PNG.
+                    if typeNames.contains("public.tiff") {
+                        if let tiffData = pasteboard.data(forType: .tiff)
+                        {
+                            if let image = NSImage(data: tiffData),
+                               let pngData = image.pngDataRepresentation() {
+                                
+                                // Replace the clipboard content with PNG data
+                                lastChangeCount += 1;
+                                pasteboard.clearContents()
+                                pasteboard.setData(pngData, forType: .png)
+                                
+                                // Schedule a system notification
+                                let content = UNMutableNotificationContent()
+                                content.title = "Clipboard Updated"
+                                content.body = "->PNG"
+                                
+                                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                                UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                                
+                                // After processing TIFF, exit to avoid further processing
+                                return
+                            }
+                        }
+                    }
                 }
             }
             
