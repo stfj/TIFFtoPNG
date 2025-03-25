@@ -21,13 +21,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         "AutoSmartQuotesEnabled": true,
         "LaunchAtLoginEnabled": false
     ]
-
     
+    var gcdTimer: DispatchSourceTimer?
+
+    func startClipboardMonitoring() {
+        // Create a timer on a background queue
+        gcdTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .background))
+        gcdTimer?.schedule(deadline: .now(), repeating: 0.5)  // Check every second
+        gcdTimer?.setEventHandler { [weak self] in
+            // Dispatch back to the main queue if your checkClipboard needs to update UI
+            DispatchQueue.main.async {
+                self?.checkClipboard()
+            }
+        }
+        gcdTimer?.resume()
+    }
+
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Create the status item for the menubar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
-            button.title = "Tiff2PNG" // You can also set an image here
+            button.image = NSImage(named: NSImage.Name("StatusIcon"))
+            button.image?.isTemplate = true
         }
         
         // Register default settings
@@ -74,12 +89,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
-        // Start monitoring the clipboard using a timer
-        timer = Timer.scheduledTimer(timeInterval: 1.0,
-                                     target: self,
-                                     selector: #selector(checkClipboard),
-                                     userInfo: nil,
-                                     repeats: true)
+        startClipboardMonitoring()
     }
     
     @objc func toggleConversion(_ sender: NSMenuItem) {
@@ -164,7 +174,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     let content = UNMutableNotificationContent()
                     content.title = "Clipboard Updated"
                     content.body = "->PNG"
-                    content.sound = UNNotificationSound.default
 
                     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
                     let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
@@ -198,7 +207,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         let content = UNMutableNotificationContent()
                         content.title = "Clipboard Updated"
                         content.body = "->plaintext"
-                        content.sound = UNNotificationSound.default
                         
                         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
                         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
@@ -227,7 +235,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         let content = UNMutableNotificationContent()
                         content.title = "Clipboard Updated"
                         content.body = "->plaintext"
-                        content.sound = UNNotificationSound.default
                         
                         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
                         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
@@ -253,7 +260,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     let content = UNMutableNotificationContent()
                     content.title = "Clipboard Updated"
                     content.body = "->dumb quotes"
-                    content.sound = UNNotificationSound.default
                     
                     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
                     let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)

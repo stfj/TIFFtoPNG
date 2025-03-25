@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		53605D622D93165F000DC7C1 /* StatusIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 53605D612D93165F000DC7C1 /* StatusIcon.png */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		53605D342D9208E2000DC7C1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,11 +31,25 @@
 		53605D242D9208E1000DC7C1 /* TiffToPNG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TiffToPNG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53605D332D9208E2000DC7C1 /* TiffToPNGTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TiffToPNGTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		53605D3D2D9208E2000DC7C1 /* TiffToPNGUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TiffToPNGUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		53605D612D93165F000DC7C1 /* StatusIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = StatusIcon.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		53605D642D9317D1000DC7C1 /* Exceptions for "TiffToPNG" folder in "TiffToPNG" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 53605D232D9208E1000DC7C1 /* TiffToPNG */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		53605D262D9208E1000DC7C1 /* TiffToPNG */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				53605D642D9317D1000DC7C1 /* Exceptions for "TiffToPNG" folder in "TiffToPNG" target */,
+			);
 			path = TiffToPNG;
 			sourceTree = "<group>";
 		};
@@ -75,6 +93,7 @@
 		53605D1B2D9208E1000DC7C1 = {
 			isa = PBXGroup;
 			children = (
+				53605D612D93165F000DC7C1 /* StatusIcon.png */,
 				53605D262D9208E1000DC7C1 /* TiffToPNG */,
 				53605D362D9208E2000DC7C1 /* TiffToPNGTests */,
 				53605D402D9208E2000DC7C1 /* TiffToPNGUITests */,
@@ -212,6 +231,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53605D622D93165F000DC7C1 /* StatusIcon.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -399,9 +419,10 @@
 				DEVELOPMENT_TEAM = AP5TC4472F;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TiffToPNG/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TiffToPNG;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainNibFile = MainMenu;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -427,9 +448,10 @@
 				DEVELOPMENT_TEAM = AP5TC4472F;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TiffToPNG/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TiffToPNG;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainNibFile = MainMenu;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
