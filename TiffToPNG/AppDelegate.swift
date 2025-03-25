@@ -10,9 +10,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var isConversionEnabled = true
     var isPlaintextEnabled = true
     var isSmartQuotesEnabled = true
-    var lastProcessedTiffData: Data?
-    var lastProcessedRTFData: Data?
-    var lastProcessedHTMLData: Data?
     var isLaunchAtLoginEnabled = false
     
     let defaults: [String: Any] = [
@@ -66,7 +63,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let toggleItem = NSMenuItem(title: "Auto Convert TIFF", action: #selector(toggleConversion(_:)), keyEquivalent: "")
         toggleItem.state = isConversionEnabled ? .on : .off
         menu.addItem(toggleItem)
-        
+
         let plaintextToggleItem = NSMenuItem(title: "Auto Plaintext", action: #selector(togglePlaintext(_:)), keyEquivalent: "")
         plaintextToggleItem.state = isPlaintextEnabled ? .on : .off
         menu.addItem(plaintextToggleItem)
@@ -158,13 +155,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if isConversionEnabled,
                let types = pasteboard.types,
                types.contains(.tiff),
+               !types.contains(.png),
                let tiffData = pasteboard.data(forType: .tiff) {
                 
-                // Skip processing if this clipboard data was already processed
-                if let lastData = lastProcessedTiffData, lastData == tiffData {
+                let tiffSignature1 = Data([0x49, 0x49, 0x2A, 0x00])
+                let tiffSignature2 = Data([0x4D, 0x4D, 0x00, 0x2A])
+                print(tiffData.starts(with: tiffSignature1) || tiffData.starts(with: tiffSignature2))
+                guard tiffData.starts(with: tiffSignature1) || tiffData.starts(with: tiffSignature2) else {
                     return
                 }
                 
+
                 if let image = NSImage(data: tiffData),
                    let pngData = image.pngDataRepresentation() {
                     
@@ -172,9 +173,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     lastChangeCount += 1;
                     pasteboard.clearContents()
                     pasteboard.setData(pngData, forType: .png)
-                    
-                    // Mark this TIFF data as processed
-                    lastProcessedTiffData = tiffData
                     
                     // Schedule a system notification
                     let content = UNMutableNotificationContent()
@@ -193,11 +191,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Check for styled text and if plaintext conversion is enabled
             if isPlaintextEnabled, let types = pasteboard.types {
                 if types.contains(.rtf), let rtfData = pasteboard.data(forType: .rtf) {
-                    // Skip processing if this styled text was already processed
-                    if let lastRTFData = lastProcessedRTFData, lastRTFData == rtfData {
-                        return
-                    }
-                    
                     if let attributedString = try? NSAttributedString(data: rtfData, options: [.documentType: NSAttributedString.DocumentType.rtf], documentAttributes: nil) {
                         let plainText = attributedString.string
                         
@@ -206,9 +199,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         pasteboard.clearContents()
                         pasteboard.setString(plainText, forType: .string)
                         
-                        // Mark this styled text as processed
-                        lastProcessedRTFData = rtfData
-                        
+
                         // Schedule a system notification
                         let content = UNMutableNotificationContent()
                         content.title = "Clipboard Updated"
@@ -220,34 +211,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         
                         return
                     }
-                } else if types.contains(.html), let htmlData = pasteboard.data(forType: .html) {
-                    // Skip processing if this styled text was already processed
-                    if let lastHTMLData = lastProcessedHTMLData, lastHTMLData == htmlData {
-                        return
-                    }
+                } else if types.contains(.html), types.contains(.string), let plainText = pasteboard.string(forType: .string) {
                     
-                    if let attributedString = try? NSAttributedString(data: htmlData, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
-                        let plainText = attributedString.string
-                        
-                        // Replace the clipboard content with plain text
-                        lastChangeCount += 1
-                        pasteboard.clearContents()
-                        pasteboard.setString(plainText, forType: .string)
-                        
-                        // Mark this styled text as processed
-                        lastProcessedHTMLData = htmlData
-                        
-                        // Schedule a system notification
-                        let content = UNMutableNotificationContent()
-                        content.title = "Clipboard Updated"
-                        content.body = "->plaintext"
-                        
-                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-                        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-                        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-                        
-                        return
-                    }
+                    // Replace the clipboard content with plain text from public.utf8-plain-text
+                    lastChangeCount += 1
+                    pasteboard.clearContents()
+                    pasteboard.setString(plainText, forType: .string)
+                    
+                    // Schedule a system notification
+                    let content = UNMutableNotificationContent()
+                    content.title = "Clipboard Updated"
+                    content.body = "->plaintext"
+                    
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                    let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    
+                    return
                 }
             }
             
