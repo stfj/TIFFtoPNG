@@ -1,5 +1,6 @@
 import Cocoa
 import UserNotifications
+import ServiceManagement
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -12,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var lastProcessedTiffData: Data?
     var lastProcessedRTFData: Data?
     var lastProcessedHTMLData: Data?
+    var isLaunchAtLoginEnabled = false
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Create the status item for the menubar
@@ -35,6 +37,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let smartQuotesToggleItem = NSMenuItem(title: "Auto Smart Quotes", action: #selector(toggleSmartQuotes(_:)), keyEquivalent: "")
         smartQuotesToggleItem.state = isSmartQuotesEnabled ? .on : .off
         menu.addItem(smartQuotesToggleItem)
+
+        let launchAtLoginToggleItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin(_:)), keyEquivalent: "")
+        launchAtLoginToggleItem.state = isLaunchAtLoginEnabled ? .on : .off
+        menu.addItem(launchAtLoginToggleItem)
         
         // Separator for clarity
         menu.addItem(NSMenuItem.separator())
@@ -73,6 +79,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func toggleSmartQuotes(_ sender: NSMenuItem) {
         isSmartQuotesEnabled.toggle()
         sender.state = isSmartQuotesEnabled ? .on : .off
+    }
+    
+    @objc func toggleLaunchAtLogin(_ sender: NSMenuItem) {
+        isLaunchAtLoginEnabled.toggle()
+        sender.state = isLaunchAtLoginEnabled ? .on : .off
+        if #available(macOS 13.0, *) {
+            do {
+                if isLaunchAtLoginEnabled {
+                    try SMAppService.mainApp.register()
+                    print("Registered main app for launch at login.")
+                } else {
+                    try SMAppService.mainApp.unregister()
+                    print("Unregistered main app for launch at login.")
+                }
+            } catch {
+                print("Error toggling launch at login: \(error)")
+            }
+        } else {
+            // Fallback for earlier macOS versions (if needed)
+            print("Launch at login toggling not supported on this macOS version.")
+        }
     }
     
     @objc func quitApp() {
