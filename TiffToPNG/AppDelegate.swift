@@ -63,7 +63,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         
         // Toggle conversion menu item with checkmark state
-        let toggleItem = NSMenuItem(title: "Auto Convert", action: #selector(toggleConversion(_:)), keyEquivalent: "")
+        let toggleItem = NSMenuItem(title: "Auto Convert TIFF", action: #selector(toggleConversion(_:)), keyEquivalent: "")
         toggleItem.state = isConversionEnabled ? .on : .off
         menu.addItem(toggleItem)
         
