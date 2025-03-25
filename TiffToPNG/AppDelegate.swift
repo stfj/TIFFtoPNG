@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var lastChangeCount = NSPasteboard.general.changeCount
     var isConversionEnabled = true
     var isPlaintextEnabled = true
+    var isSmartQuotesEnabled = true
     var lastProcessedTiffData: Data?
     var lastProcessedRTFData: Data?
     var lastProcessedHTMLData: Data?
@@ -30,6 +31,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let plaintextToggleItem = NSMenuItem(title: "Auto Plaintext", action: #selector(togglePlaintext(_:)), keyEquivalent: "")
         plaintextToggleItem.state = isPlaintextEnabled ? .on : .off
         menu.addItem(plaintextToggleItem)
+
+        let smartQuotesToggleItem = NSMenuItem(title: "Auto Smart Quotes", action: #selector(toggleSmartQuotes(_:)), keyEquivalent: "")
+        smartQuotesToggleItem.state = isSmartQuotesEnabled ? .on : .off
+        menu.addItem(smartQuotesToggleItem)
         
         // Separator for clarity
         menu.addItem(NSMenuItem.separator())
@@ -65,6 +70,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         sender.state = isPlaintextEnabled ? .on : .off
     }
     
+    @objc func toggleSmartQuotes(_ sender: NSMenuItem) {
+        isSmartQuotesEnabled.toggle()
+        sender.state = isSmartQuotesEnabled ? .on : .off
+    }
+    
     @objc func quitApp() {
         NSApp.terminate(nil)
     }
@@ -72,8 +82,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func checkClipboard() {
         let pasteboard = NSPasteboard.general
         
-        print("checking clipboard... ")
-        print(pasteboard.changeCount)
         // Only proceed if there is a change in the pasteboard
         if pasteboard.changeCount != lastChangeCount {
             // Update the lastChangeCount to prevent reprocessing
@@ -97,7 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     lastChangeCount += 1;
                     pasteboard.clearContents()
                     pasteboard.setData(pngData, forType: .png)
-                    print("Replaced TIFF with PNG.")
                     
                     // Mark this TIFF data as processed
                     lastProcessedTiffData = tiffData
@@ -105,7 +112,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     // Schedule a system notification
                     let content = UNMutableNotificationContent()
                     content.title = "Clipboard Updated"
-                    content.body = "Replaced TIFF with PNG."
+                    content.body = "->PNG"
                     content.sound = UNNotificationSound.default
 
                     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
@@ -132,7 +139,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         lastChangeCount += 1
                         pasteboard.clearContents()
                         pasteboard.setString(plainText, forType: .string)
-                        print("Replaced styled text with plain text.")
                         
                         // Mark this styled text as processed
                         lastProcessedRTFData = rtfData
@@ -140,7 +146,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         // Schedule a system notification
                         let content = UNMutableNotificationContent()
                         content.title = "Clipboard Updated"
-                        content.body = "Replaced styled text with plain text."
+                        content.body = "->plaintext"
                         content.sound = UNNotificationSound.default
                         
                         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
@@ -162,7 +168,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         lastChangeCount += 1
                         pasteboard.clearContents()
                         pasteboard.setString(plainText, forType: .string)
-                        print("Replaced styled text (HTML) with plain text.")
                         
                         // Mark this styled text as processed
                         lastProcessedHTMLData = htmlData
@@ -170,7 +175,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         // Schedule a system notification
                         let content = UNMutableNotificationContent()
                         content.title = "Clipboard Updated"
-                        content.body = "Replaced styled text (HTML) with plain text."
+                        content.body = "->plaintext"
                         content.sound = UNNotificationSound.default
                         
                         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
@@ -183,7 +188,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             
             // Check for plain text smart quotes replacement
-            if let plainText = pasteboard.string(forType: .string) {
+            if isSmartQuotesEnabled, let plainText = pasteboard.string(forType: .string) {
                 let updatedText = plainText
                     .replacingOccurrences(of: "“", with: "\"")
                     .replacingOccurrences(of: "”", with: "\"")
@@ -193,11 +198,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     lastChangeCount += 1
                     pasteboard.clearContents()
                     pasteboard.setString(updatedText, forType: .string)
-                    print("Replaced smart quotes with dumb quotes.")
                     
                     let content = UNMutableNotificationContent()
                     content.title = "Clipboard Updated"
-                    content.body = "Replaced smart quotes with dumb quotes."
+                    content.body = "->dumb quotes"
                     content.sound = UNNotificationSound.default
                     
                     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
