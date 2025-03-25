@@ -6,7 +6,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var timer: Timer?
     var lastChangeCount = NSPasteboard.general.changeCount
-    var isConversionEnabled = true  // Toggle flag
+    var isConversionEnabled = true
     var isPlaintextEnabled = true
     var lastProcessedTiffData: Data?
     var lastProcessedRTFData: Data?
@@ -179,6 +179,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         
                         return
                     }
+                }
+            }
+            
+            // Check for plain text smart quotes replacement
+            if let plainText = pasteboard.string(forType: .string) {
+                let updatedText = plainText
+                    .replacingOccurrences(of: "“", with: "\"")
+                    .replacingOccurrences(of: "”", with: "\"")
+                    .replacingOccurrences(of: "‘", with: "'")
+                    .replacingOccurrences(of: "’", with: "'")
+                if updatedText != plainText {
+                    lastChangeCount += 1
+                    pasteboard.clearContents()
+                    pasteboard.setString(updatedText, forType: .string)
+                    print("Replaced smart quotes with dumb quotes.")
+                    
+                    let content = UNMutableNotificationContent()
+                    content.title = "Clipboard Updated"
+                    content.body = "Replaced smart quotes with dumb quotes."
+                    content.sound = UNNotificationSound.default
+                    
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                    let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    
+                    return
                 }
             }
         }
