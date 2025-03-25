@@ -7,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var timer: Timer?
     var lastChangeCount = NSPasteboard.general.changeCount
     var isConversionEnabled = true  // Toggle flag
+    var lastProcessedTiffData: Data?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Create the status item for the menubar
@@ -59,32 +60,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func checkClipboard() {
         let pasteboard = NSPasteboard.general
         
+        
         // Only proceed if there is a change in the pasteboard
         if pasteboard.changeCount != lastChangeCount {
-            lastChangeCount = pasteboard.changeCount
+            lastChangeCount = pasteboard.changeCount + 1
             
             // Check for TIFF data and if conversion is enabled
             if isConversionEnabled,
                let types = pasteboard.types,
                types.contains(.tiff),
-               let tiffData = pasteboard.data(forType: .tiff),
-               let image = NSImage(data: tiffData),
-               let pngData = image.pngDataRepresentation() {
+               let tiffData = pasteboard.data(forType: .tiff) {
                 
-                // Replace the clipboard content with PNG data
-                pasteboard.clearContents()
-                pasteboard.setData(pngData, forType: .png)
-                print("Replaced TIFF with PNG.")
+                // Skip processing if this clipboard data was already processed
+                if let lastData = lastProcessedTiffData, lastData == tiffData {
+                    return
+                }
                 
-                // Schedule a system notification
-                let content = UNMutableNotificationContent()
-                content.title = "Clipboard Updated"
-                content.body = "Replaced TIFF with PNG."
-                content.sound = UNNotificationSound.default
+                if let image = NSImage(data: tiffData),
+                   let pngData = image.pngDataRepresentation() {
+                    
+                    // Replace the clipboard content with PNG data
+                    pasteboard.clearContents()
+                    pasteboard.setData(pngData, forType: .png)
+                    print("Replaced TIFF with PNG.")
+                    
+                    // Mark this TIFF data as processed
+                    lastProcessedTiffData = tiffData
+                    
+                    // Schedule a system notification
+                    let content = UNMutableNotificationContent()
+                    content.title = "Clipboard Updated"
+                    content.body = "Replaced TIFF with PNG."
+                    content.sound = UNNotificationSound.default
 
-                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-                UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                    let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                }
             }
         }
     }
