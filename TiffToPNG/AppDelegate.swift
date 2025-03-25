@@ -7,9 +7,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var timer: Timer?
     var lastChangeCount = NSPasteboard.general.changeCount
     var isConversionEnabled = true  // Toggle flag
-    var lastProcessedTiffData: Data?
     var isPlaintextEnabled = true
+    var lastProcessedTiffData: Data?
     var lastProcessedRTFData: Data?
+    var lastProcessedHTMLData: Data?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Create the status item for the menubar
@@ -116,40 +117,68 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             
-            // Check for styled text (RTF) and if plaintext conversion is enabled
-            if isPlaintextEnabled,
-               let types = pasteboard.types,
-               types.contains(.rtf),
-               let rtfData = pasteboard.data(forType: .rtf) {
-            
-                print("Check for text.")
-                // Skip processing if this styled text was already processed
-                if let lastRTFData = lastProcessedRTFData, lastRTFData == rtfData {
-                    return
-                }
-                print("Found text?")
-
-                if let attributedString = try? NSAttributedString(data: rtfData, options: [.documentType: NSAttributedString.DocumentType.rtf], documentAttributes: nil) {
-                    let plainText = attributedString.string
+            // Check for styled text and if plaintext conversion is enabled
+            if isPlaintextEnabled, let types = pasteboard.types {
+                if types.contains(.rtf), let rtfData = pasteboard.data(forType: .rtf) {
+                    // Skip processing if this styled text was already processed
+                    if let lastRTFData = lastProcessedRTFData, lastRTFData == rtfData {
+                        return
+                    }
                     
-                    // Replace the clipboard content with plain text
-                    lastChangeCount += 1;
-                    pasteboard.clearContents()
-                    pasteboard.setString(plainText, forType: .string)
-                    print("Replaced styled text with plain text.")
+                    if let attributedString = try? NSAttributedString(data: rtfData, options: [.documentType: NSAttributedString.DocumentType.rtf], documentAttributes: nil) {
+                        let plainText = attributedString.string
+                        
+                        // Replace the clipboard content with plain text
+                        lastChangeCount += 1
+                        pasteboard.clearContents()
+                        pasteboard.setString(plainText, forType: .string)
+                        print("Replaced styled text with plain text.")
+                        
+                        // Mark this styled text as processed
+                        lastProcessedRTFData = rtfData
+                        
+                        // Schedule a system notification
+                        let content = UNMutableNotificationContent()
+                        content.title = "Clipboard Updated"
+                        content.body = "Replaced styled text with plain text."
+                        content.sound = UNNotificationSound.default
+                        
+                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                        
+                        return
+                    }
+                } else if types.contains(.html), let htmlData = pasteboard.data(forType: .html) {
+                    // Skip processing if this styled text was already processed
+                    if let lastHTMLData = lastProcessedHTMLData, lastHTMLData == htmlData {
+                        return
+                    }
                     
-                    // Mark this styled text as processed
-                    lastProcessedRTFData = rtfData
-                    
-                    // Schedule a system notification
-                    let content = UNMutableNotificationContent()
-                    content.title = "Clipboard Updated"
-                    content.body = "Replaced styled text with plain text."
-                    content.sound = UNNotificationSound.default
-                    
-                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-                    let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    if let attributedString = try? NSAttributedString(data: htmlData, options: [.documentType: NSAttributedString.DocumentType.html], documentAttributes: nil) {
+                        let plainText = attributedString.string
+                        
+                        // Replace the clipboard content with plain text
+                        lastChangeCount += 1
+                        pasteboard.clearContents()
+                        pasteboard.setString(plainText, forType: .string)
+                        print("Replaced styled text (HTML) with plain text.")
+                        
+                        // Mark this styled text as processed
+                        lastProcessedHTMLData = htmlData
+                        
+                        // Schedule a system notification
+                        let content = UNMutableNotificationContent()
+                        content.title = "Clipboard Updated"
+                        content.body = "Replaced styled text (HTML) with plain text."
+                        content.sound = UNNotificationSound.default
+                        
+                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                        
+                        return
+                    }
                 }
             }
         }
