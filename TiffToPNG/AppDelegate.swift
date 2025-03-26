@@ -9,12 +9,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var lastChangeCount = NSPasteboard.general.changeCount
     var isConversionEnabled = true
     var isPlaintextEnabled = true
+    var isHTMLPlaintextEnabled = true
     var isSmartQuotesEnabled = true
     var isLaunchAtLoginEnabled = false
     
     let defaults: [String: Any] = [
         "AutoConvertEnabled": true,
         "AutoPlaintextEnabled": true,
+        "AutoHTMLPlaintextEnabled": false,
         "AutoSmartQuotesEnabled": true,
         "LaunchAtLoginEnabled": false
     ]
@@ -53,6 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         isConversionEnabled = UserDefaults.standard.bool(forKey: "AutoConvertEnabled")
         isPlaintextEnabled = UserDefaults.standard.bool(forKey: "AutoPlaintextEnabled")
+        isHTMLPlaintextEnabled = UserDefaults.standard.bool(forKey: "AutoHTMLPlaintextEnabled")
         isSmartQuotesEnabled = UserDefaults.standard.bool(forKey: "AutoSmartQuotesEnabled")
         isLaunchAtLoginEnabled = UserDefaults.standard.bool(forKey: "LaunchAtLoginEnabled")
         
@@ -67,6 +70,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let plaintextToggleItem = NSMenuItem(title: "Auto Plaintext", action: #selector(togglePlaintext(_:)), keyEquivalent: "")
         plaintextToggleItem.state = isPlaintextEnabled ? .on : .off
         menu.addItem(plaintextToggleItem)
+        
+        let htmlplaintextToggleItem = NSMenuItem(title: "Auto HTML->Plaintext", action: #selector(toggleHTMLPlaintext(_:)), keyEquivalent: "")
+        htmlplaintextToggleItem.state = isHTMLPlaintextEnabled ? .on : .off
+        menu.addItem(htmlplaintextToggleItem)
 
         let smartQuotesToggleItem = NSMenuItem(title: "Auto Smart Quotes", action: #selector(toggleSmartQuotes(_:)), keyEquivalent: "")
         smartQuotesToggleItem.state = isSmartQuotesEnabled ? .on : .off
@@ -106,6 +113,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         isPlaintextEnabled.toggle()
         sender.state = isPlaintextEnabled ? .on : .off
         UserDefaults.standard.set(isPlaintextEnabled, forKey: "AutoPlaintextEnabled")
+        UserDefaults.standard.synchronize()
+    }
+    
+    @objc func toggleHTMLPlaintext(_ sender: NSMenuItem) {
+        isHTMLPlaintextEnabled.toggle()
+        sender.state = isHTMLPlaintextEnabled ? .on : .off
+        UserDefaults.standard.set(isHTMLPlaintextEnabled, forKey: "AutoHTMLPlaintextEnabled")
         UserDefaults.standard.synchronize()
     }
     
@@ -226,7 +240,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         
                         return
                     }
-                } else if types.contains(.html), types.contains(.string), let plainText = pasteboard.string(forType: .string) {
+                } else if isHTMLPlaintextEnabled, types.contains(.html), types.contains(.string), let plainText = pasteboard.string(forType: .string) {
                     
                     // Replace the clipboard content with plain text from public.utf8-plain-text
                     lastChangeCount += 1
